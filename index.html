@@ -1,0 +1,855 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kritzel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=DM+Mono:wght@400;500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: Kopfzeile mit zwei Reitern. Schreiben = Text, Einstellungen, Vorschau untereinander; ab 1000px Text/Einstellungen links, Vorschau rechts */
+:root{
+  --bg:#eceff4; --surface:#f8f9fb; --surface2:#e2e6ee; --ink:#161b29; --muted:#566074;
+  --line:#cdd3df; --accent:#2b4ad0; --accent-ink:#ffffff; --ok:#1c7a4b; --warn:#a9490f;
+  --paper:#ffffff; --shadow:0 1px 2px rgba(20,28,50,.12),0 10px 28px rgba(20,28,50,.08);
+  --f-display:'Caveat','Segoe Script',cursive;
+  --f-body:'Hanken Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'DM Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1219; --surface:#171b25; --surface2:#222838; --ink:#e8ebf3; --muted:#9aa3b8;
+  --line:#2d3548; --accent:#8da2ff; --accent-ink:#0f1219; --ok:#5fd09a; --warn:#f0a06a;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 28px rgba(0,0,0,.35); color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0f1219; --surface:#171b25; --surface2:#222838; --ink:#e8ebf3; --muted:#9aa3b8;
+  --line:#2d3548; --accent:#8da2ff; --accent-ink:#0f1219; --ok:#5fd09a; --warn:#f0a06a;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 28px rgba(0,0,0,.35); color-scheme:dark;}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;color-scheme:light dark}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;
+  padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:0 max(40px,env(safe-area-inset-bottom,0px))}
+.wrap{max-width:1240px;margin-inline:auto}
+button,input,select,textarea{font:inherit;color:inherit}
+.top{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:8px 16px;
+  padding-block:calc(10px + env(safe-area-inset-top,0px)) 10px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.brand{font-family:var(--f-display);font-weight:700;font-size:36px;line-height:1;margin:0}
+@media (max-width:480px){.brand{font-size:30px}.tab{padding:6px 12px}}
+.tabs{display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:12px}
+.tab{border:0;background:transparent;min-height:40px;padding:6px 18px;border-radius:9px;font-weight:600;cursor:pointer;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(20,28,50,.15)}
+.tab:focus-visible,.btn:focus-visible,.chip:focus-within,.gl:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h3{font-size:16px;margin:0}
+p{margin:0 0 10px}
+.block{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px;min-width:0}
+.step{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);padding:8px 16px;border-radius:10px;font-weight:600;cursor:pointer;position:relative;text-align:center;-webkit-tap-highlight-color:transparent}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.small{min-height:40px;padding:6px 12px;font-size:14px}
+.btn input[type=file]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:0}
+.status{min-height:1.5em;margin:10px 0 0;font-size:14px;color:var(--muted)}
+.status.ok{color:var(--ok)} .status.err{color:var(--warn)}
+.tip{font-size:14px;color:var(--muted)}
+.tmplpages{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin-top:14px}
+.tmplpages canvas{width:100%;height:auto;display:block;border:1px solid var(--line);background:#fff}
+.variant{border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px;background:var(--bg);min-width:0}
+.vhead{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 12px;align-items:baseline;margin-bottom:10px}
+.vcount{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px}
+.slot{display:flex;flex-direction:column;gap:2px;align-items:stretch}
+.slot small{font-family:var(--f-mono);font-size:12px;color:var(--muted);text-align:center}
+.slot small.done{color:var(--ok)}
+details.glyphs{margin-top:12px}
+summary{cursor:pointer;font-weight:600;font-size:15px;min-height:32px}
+.gridglyphs{display:grid;grid-template-columns:repeat(auto-fill,minmax(50px,1fr));gap:6px;margin-top:10px}
+.gl{border:1px solid var(--line);background:#fff;border-radius:8px;padding:2px;height:58px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden}
+.gl img{max-width:100%;max-height:100%;object-fit:contain}
+.gl.miss{background:transparent;border-style:dashed;color:var(--muted);font-family:var(--f-mono);cursor:default}
+.gl span{position:absolute;right:3px;bottom:0;font-family:var(--f-mono);font-size:9px;color:#6b7385}
+.backup{justify-content:flex-end}
+textarea{display:block;width:100%;min-height:180px;resize:vertical;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;line-height:1.5;font-size:16px}
+textarea::placeholder{color:var(--muted)}
+.wgrid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr);grid-template-areas:"t" "s" "p";align-items:start}
+.wgrid>.block{margin:0}
+.g-text{grid-area:t}.g-set{grid-area:s}.g-prev{grid-area:p;min-width:0}
+@media (min-width:1000px){
+  .wgrid{grid-template-columns:minmax(0,380px) minmax(0,1fr);grid-template-rows:auto 1fr;grid-template-areas:"t p" "s p"}
+}
+.fields{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:600px) and (max-width:999px){.fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px}}
+.field{display:grid;gap:6px;min-width:0;align-content:start}
+.field>label,.field>.lab{font-size:14px;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.field output{font-family:var(--f-mono);font-weight:400;color:var(--muted)}
+input[type=range]{width:100%;height:32px;margin:0;accent-color:var(--accent)}
+select{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:0 12px;min-height:44px;width:100%;font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 10px;border:1px solid var(--line);background:var(--bg);border-radius:999px;font-weight:600;font-size:15px;cursor:pointer}
+.chip i{width:20px;height:20px;border-radius:50%;border:1px solid var(--line)}
+.chip.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.chip input[type=color]{width:24px;height:24px;padding:0;border:0;border-radius:50%;background:none;cursor:pointer}
+.chip input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.chip input[type=color]::-webkit-color-swatch{border:1px solid var(--line);border-radius:50%}
+.chip input[type=color]::-moz-color-swatch{border:1px solid var(--line);border-radius:50%}
+details.more{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+details.more .fields{margin-top:14px}
+.exportbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:6px}
+.pages{display:grid;gap:18px;min-width:0;margin-top:12px}
+.pagebox{min-width:0}
+.pagebox canvas{display:block;width:100%;height:auto;box-shadow:var(--shadow);border-radius:2px;background:var(--paper)}
+.pagebox canvas.checker{background:repeating-conic-gradient(#d3d8e3 0 25%,#f3f4f8 0 50%) 0 0/20px 20px}
+.pagetools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.pagetools .lab{font-family:var(--f-mono);font-size:13px;color:var(--muted);margin-right:auto}
+.banner{border:1px dashed var(--warn);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:12px}
+@media (prefers-reduced-motion:no-preference){.btn{transition:border-color .15s,background .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1 class="brand">Kritzel</h1>
+    <div class="tabs" role="tablist">
+      <button class="tab" id="tab-hand" role="tab" aria-selected="false" aria-controls="panel-hand" type="button">Handschrift</button>
+      <button class="tab" id="tab-write" role="tab" aria-selected="true" aria-controls="panel-write" type="button">Schreiben</button>
+    </div>
+  </header>
+
+  <section id="panel-hand" role="tabpanel" aria-labelledby="tab-hand" hidden>
+    <div class="block">
+      <div class="step">1 · Vorlage</div>
+      <p>Ausdrucken und jedes Zeichen in sein Feld schreiben.</p>
+      <div class="row">
+        <button class="btn primary" id="btn-tpl-pdf" type="button">Vorlage speichern</button>
+        <button class="btn" id="btn-tpl-show" type="button">Vorlage ansehen</button>
+      </div>
+      <div class="tmplpages" id="tmplpages" hidden></div>
+      <p class="status" id="tplstatus" role="status" aria-live="polite"></p>
+    </div>
+
+    <div class="block">
+      <div class="step">2 · Fotos hochladen</div>
+      <p>Jede Seite flach fotografieren, alle vier schwarzen Ecken im Bild.</p>
+      <div id="variants"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="btn-addvar" type="button">+ Weitere Variante</button>
+      </div>
+      <p class="status" id="hstatus" role="status" aria-live="polite"></p>
+    </div>
+
+    <div class="row backup">
+      <button class="btn small" id="btn-export-json" type="button">Handschrift sichern</button>
+      <span class="btn small">Handschrift laden<input type="file" id="file-import" accept=".json,application/json" aria-label="Handschrift laden"></span>
+    </div>
+  </section>
+
+  <section id="panel-write" role="tabpanel" aria-labelledby="tab-write">
+    <div class="wgrid">
+      <div class="block g-text">
+        <textarea id="txt" spellcheck="false" placeholder="Text hier einfügen" aria-label="Text"></textarea>
+      </div>
+
+      <div class="block g-set">
+        <div class="fields">
+          <div class="field"><label for="paper">Papier</label>
+            <select id="paper">
+              <option value="liniert">Liniert</option>
+              <option value="kariert">Kariert</option>
+              <option value="punkte">Punkte</option>
+              <option value="blanko">Blanko</option>
+              <option value="transparent">Transparent</option>
+            </select></div>
+          <div class="field"><span class="lab">Farbe</span>
+            <div class="chips" id="swatches">
+              <button type="button" class="chip" data-c="#1d3fa8"><i style="background:#1d3fa8"></i>Blau</button>
+              <button type="button" class="chip" data-c="#14161c"><i style="background:#14161c"></i>Schwarz</button>
+              <label class="chip"><input type="color" id="ink" aria-label="Eigene Farbe">Eigene</label>
+            </div></div>
+          <div class="field"><label for="size">Schriftgröße <output id="o-size"></output></label><input type="range" id="size" min="0.1" max="1" step="0.01"></div>
+          <div class="field"><label for="line">Zeilenabstand <output id="o-line"></output></label><input type="range" id="line" min="3" max="20" step="0.5"></div>
+        </div>
+        <details class="more">
+          <summary>Mehr</summary>
+          <div class="fields">
+            <div class="field"><label for="nat">Natürlichkeit <output id="o-nat"></output></label><input type="range" id="nat" min="0" max="100" step="1"></div>
+            <div class="field"><label for="letter">Buchstabenabstand <output id="o-letter"></output></label><input type="range" id="letter" min="-10" max="40" step="1"></div>
+            <div class="field"><label for="word">Wortabstand <output id="o-word"></output></label><input type="range" id="word" min="0.3" max="3" step="0.1"></div>
+            <div class="field"><label for="mode">Varianten</label>
+              <select id="mode">
+                <option value="cycle">Abwechselnd</option>
+                <option value="random">Zufällig</option>
+                <option value="first">Nur Variante 1</option>
+              </select></div>
+            <div class="field"><label for="quality">Qualität</label>
+              <select id="quality">
+                <option value="1">Standard</option>
+                <option value="2">Hoch</option>
+              </select></div>
+            <div class="field"><span class="lab">Variation</span><button class="btn" id="btn-reroll" type="button">Neu würfeln</button></div>
+          </div>
+        </details>
+      </div>
+
+      <div class="g-prev">
+        <div id="banner" class="banner" hidden></div>
+        <div class="exportbar">
+          <button class="btn primary" id="btn-pdf" type="button">Als PDF speichern</button>
+          <span class="tip" id="pagecount"></span>
+        </div>
+        <p class="tip">Für GoodNotes: PDF importieren oder eine Seite kopieren und einfügen.</p>
+        <p class="status" id="wstatus" role="status" aria-live="polite"></p>
+        <div class="pages" id="pages"></div>
+      </div>
+    </div>
+  </section>
+</div>
+<script>
+
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+
+/* ---------- Konstanten ---------- */
+const CHARS = [...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZäöüÄÖÜß0123456789.,!?:;-()"\'/+=%&@€*'];
+const CHARSET = new Set(CHARS);
+const PW = 1240, PH = 1754;              // A4 bei 150 dpi
+const GX = 110, GY = 190, CW = 170, CH = 180, COLS = 6, PERPAGE = 48;
+const LABEL = 24, BASE = 125, XH = 80;   // Feldaufbau: Beschriftung, Grundlinie, x-Höhe
+const NPAGES = Math.ceil(CHARS.length / PERPAGE);
+const MARK = [{x:70,y:70,s:64},{x:1170,y:70,s:44},{x:1170,y:1684,s:44},{x:70,y:1684,s:44}];
+const MMPX = PW / 210;
+
+/* ---------- Zustand ---------- */
+const defaults = {
+  text: '', paper: 'liniert', ink: '#1d3fa8', size: 0.4, line: 8, nat: 40, letter: 4, word: 1,
+  mode: 'cycle', fallback: true, quality: '1'
+};
+let st = Object.assign({}, defaults);
+try { Object.assign(st, JSON.parse(localStorage.getItem('kritzel-settings') || '{}')); } catch (e) {}
+let profile = { variants: [] };
+const imgs = new Map();      // "vid|zeichen" -> {img,w,h,top}
+const tints = new Map();
+let seed = 20240611;
+let busy = false;
+
+const uid = () => Math.random().toString(36).slice(2, 8);
+const say = (el, msg, kind) => { el.textContent = msg || ''; el.className = 'status' + (kind ? ' ' + kind : ''); };
+const hs = $('#hstatus'), ws = $('#wstatus'), ts = $('#tplstatus');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function saveSettings() { try { localStorage.setItem('kritzel-settings', JSON.stringify(st)); } catch (e) {} }
+
+/* ---------- IndexedDB ---------- */
+function idb() {
+  return new Promise((res, rej) => {
+    try {
+      const r = indexedDB.open('handschriftbot', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('kv');
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    } catch (e) { rej(e); }
+  });
+}
+async function kvGet(k) {
+  try {
+    const db = await idb();
+    return await new Promise((res, rej) => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+  } catch (e) { return undefined; }
+}
+async function kvSet(k, v) {
+  try {
+    const db = await idb();
+    await new Promise((res, rej) => { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; t.onerror = () => rej(t.error); });
+  } catch (e) {}
+}
+const saveProfile = () => kvSet('profile', JSON.parse(JSON.stringify(profile)));
+
+/* ---------- Speichern: Teilen-Menü auf iPad/Handy, sonst Download ---------- */
+const MIME = { pdf: 'application/pdf', png: 'image/png', json: 'application/json' };
+function anchorSave(file) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+}
+async function saveFile(filename, data, el) {
+  const type = MIME[filename.split('.').pop()] || 'application/octet-stream';
+  const file = new File([data], filename, { type });
+  const touch = navigator.maxTouchPoints > 1 && /iPhone|iPad|Macintosh|Android/.test(navigator.userAgent);
+  if (touch && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file] }); return true; }
+    catch (e) {
+      if (e && e.name === 'AbortError') return false;
+      el.className = 'status'; el.textContent = '';
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'btn primary small';
+      b.textContent = 'Fertig. Tippen zum Speichern';
+      b.onclick = async () => { try { await navigator.share({ files: [file] }); el.textContent = ''; } catch (e2) { if (!(e2 && e2.name === 'AbortError')) anchorSave(file); } };
+      el.appendChild(b); return false;
+    }
+  }
+  try { anchorSave(file); return true; }
+  catch (e) { say(el, 'Speichern hat nicht geklappt.', 'err'); return false; }
+}
+const canvasBlob = (c, type, q) => new Promise(res => c.toBlob(res, type, q));
+
+/* ---------- Vorlage ---------- */
+async function drawTemplate(p, S) {
+  try { await Promise.all([document.fonts.load('600 34px "Hanken Grotesk"'), document.fonts.load('500 17px "DM Mono"')]); } catch (e) {}
+  const c = document.createElement('canvas'); c.width = PW * S; c.height = PH * S;
+  const g = c.getContext('2d'); g.scale(S, S);
+  g.fillStyle = '#fff'; g.fillRect(0, 0, PW, PH);
+  g.fillStyle = '#000';
+  for (const m of MARK) g.fillRect(m.x - m.s / 2, m.y - m.s / 2, m.s, m.s);
+  g.fillStyle = '#1a1a1a'; g.font = '600 34px "Hanken Grotesk", sans-serif';
+  g.fillText('Meine Handschrift · Seite ' + (p + 1) + ' von ' + NPAGES, 130, 80);
+  g.fillStyle = '#555'; g.font = '400 20px "Hanken Grotesk", sans-serif';
+  g.fillText('Jedes Zeichen in sein Feld schreiben, der Fuß des Buchstabens sitzt auf der durchgezogenen Linie.', 130, 114);
+  g.fillText('Dunkler Stift, nichts über den Feldrand. Seite flach und hell fotografieren, alle vier Ecken sichtbar.', 130, 142);
+  g.fillText('Das große Quadrat gehört nach oben links.', 130, 170);
+  const line = '#d9d9d9';
+  for (let i = 0; i < PERPAGE; i++) {
+    const idx = p * PERPAGE + i; if (idx >= CHARS.length) break;
+    const x = GX + (i % COLS) * CW, y = GY + Math.floor(i / COLS) * CH;
+    g.strokeStyle = line; g.lineWidth = 2; g.setLineDash([]);
+    g.strokeRect(x + 1, y + 1, CW - 2, CH - 2);
+    g.beginPath(); g.moveTo(x, y + LABEL); g.lineTo(x + CW, y + LABEL); g.stroke();
+    g.beginPath(); g.moveTo(x + 6, y + BASE); g.lineTo(x + CW - 6, y + BASE); g.stroke();
+    g.lineWidth = 1.5; g.setLineDash([6, 6]);
+    g.beginPath(); g.moveTo(x + 6, y + XH); g.lineTo(x + CW - 6, y + XH); g.stroke();
+    g.setLineDash([]);
+    g.fillStyle = '#8a8a8a'; g.font = '500 17px "DM Mono", monospace';
+    g.fillText(CHARS[idx], x + 8, y + 18);
+  }
+  return c;
+}
+
+/* ---------- PDF ---------- */
+async function canvasToJpeg(c, q) {
+  const t = document.createElement('canvas'); t.width = c.width; t.height = c.height;
+  const g = t.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, t.width, t.height); g.drawImage(c, 0, 0);
+  const b = await canvasBlob(t, 'image/jpeg', q);
+  return { bytes: new Uint8Array(await b.arrayBuffer()), w: t.width, h: t.height };
+}
+async function pagesToPdf(canvases) {
+  const enc = new TextEncoder(), chunks = [], offsets = []; let off = 0;
+  const push = d => { const u = typeof d === 'string' ? enc.encode(d) : d; chunks.push(u); off += u.length; };
+  const n = canvases.length;
+  push('%PDF-1.4\n');
+  const obj = (id, body) => { offsets[id] = off; push(id + ' 0 obj\n' + body + '\nendobj\n'); };
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2, '<< /Type /Pages /Kids [' + canvases.map((_, i) => (3 + 3 * i) + ' 0 R').join(' ') + '] /Count ' + n + ' >>');
+  for (let i = 0; i < n; i++) {
+    const j = await canvasToJpeg(canvases[i], 0.93);
+    obj(3 + 3 * i, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ' + (5 + 3 * i) + ' 0 R >> >> /Contents ' + (4 + 3 * i) + ' 0 R >>');
+    const content = 'q 595.28 0 0 841.89 0 0 cm /Im0 Do Q';
+    obj(4 + 3 * i, '<< /Length ' + content.length + ' >>\nstream\n' + content + '\nendstream');
+    offsets[5 + 3 * i] = off;
+    push((5 + 3 * i) + ' 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + j.w + ' /Height ' + j.h + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + j.bytes.length + ' >>\nstream\n');
+    push(j.bytes); push('\nendstream\nendobj\n');
+  }
+  const xr = off, total = 3 * n + 3;
+  let x = 'xref\n0 ' + total + '\n0000000000 65535 f \n';
+  for (let id = 1; id < total; id++) x += String(offsets[id]).padStart(10, '0') + ' 00000 n \n';
+  push(x); push('trailer\n<< /Size ' + total + ' /Root 1 0 R >>\nstartxref\n' + xr + '\n%%EOF');
+  return new Blob(chunks, { type: 'application/pdf' });
+}
+
+/* ---------- Seiten-Erkennung ---------- */
+async function fileToCanvas(file, maxSide) {
+  const url = URL.createObjectURL(file);
+  try {
+    const im = new Image(); im.src = url; await im.decode();
+    const sc = Math.min(1, maxSide / Math.max(im.naturalWidth, im.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.round(im.naturalWidth * sc); c.height = Math.round(im.naturalHeight * sc);
+    c.getContext('2d', { willReadFrequently: true }).drawImage(im, 0, 0, c.width, c.height);
+    return c;
+  } finally { setTimeout(() => URL.revokeObjectURL(url), 15000); }
+}
+function toGray(canvas) {
+  const w = canvas.width, h = canvas.height;
+  const d = canvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, w, h).data;
+  const g = new Uint8Array(w * h);
+  for (let i = 0, j = 0; i < g.length; i++, j += 4) g[i] = (d[j] * 299 + d[j + 1] * 587 + d[j + 2] * 114) / 1000;
+  return g;
+}
+function findMarkers(gray, w, h) {
+  const W1 = w + 1, I = new Float64Array(W1 * (h + 1));
+  for (let y = 0; y < h; y++) { let row = 0; for (let x = 0; x < w; x++) { row += gray[y * w + x]; I[(y + 1) * W1 + x + 1] = I[y * W1 + x + 1] + row; } }
+  const win = Math.max(8, Math.round(Math.max(w, h) / 8)), bin = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    const y0 = Math.max(0, y - win), y1 = Math.min(h, y + win + 1);
+    for (let x = 0; x < w; x++) {
+      const x0 = Math.max(0, x - win), x1 = Math.min(w, x + win + 1);
+      const sum = I[y1 * W1 + x1] - I[y0 * W1 + x1] - I[y1 * W1 + x0] + I[y0 * W1 + x0];
+      if (gray[y * w + x] < (sum / ((x1 - x0) * (y1 - y0))) * 0.62) bin[y * w + x] = 1;
+    }
+  }
+  const seen = new Uint8Array(w * h), stack = new Int32Array(w * h), L = Math.max(w, h), cands = [];
+  for (let i = 0; i < w * h; i++) {
+    if (!bin[i] || seen[i]) continue;
+    let sp = 0, area = 0, minx = w, maxx = 0, miny = h, maxy = 0, sx = 0, sy = 0;
+    stack[sp++] = i; seen[i] = 1;
+    while (sp) {
+      const p = stack[--sp], x = p % w, y = (p / w) | 0;
+      area++; sx += x; sy += y;
+      if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
+      if (x > 0 && bin[p - 1] && !seen[p - 1]) { seen[p - 1] = 1; stack[sp++] = p - 1; }
+      if (x < w - 1 && bin[p + 1] && !seen[p + 1]) { seen[p + 1] = 1; stack[sp++] = p + 1; }
+      if (y > 0 && bin[p - w] && !seen[p - w]) { seen[p - w] = 1; stack[sp++] = p - w; }
+      if (y < h - 1 && bin[p + w] && !seen[p + w]) { seen[p + w] = 1; stack[sp++] = p + w; }
+    }
+    const bw = maxx - minx + 1, bh = maxy - miny + 1, side = (bw + bh) / 2, ratio = bw / bh;
+    if (side < L * 0.012 || side > L * 0.1 || ratio < 0.6 || ratio > 1.65 || area / (bw * bh) < 0.6) continue;
+    cands.push({ x: sx / area, y: sy / area, area });
+  }
+  const pick = (left, top) => {
+    const cx = left ? 0 : w, cy = top ? 0 : h; let best = null, bd = 1e18;
+    for (const c of cands) {
+      if ((c.x < w / 2) !== left || (c.y < h / 2) !== top) continue;
+      const d = (c.x - cx) ** 2 + (c.y - cy) ** 2; if (d < bd) { bd = d; best = c; }
+    }
+    return best;
+  };
+  const pts = [pick(true, true), pick(false, true), pick(false, false), pick(true, false)];
+  if (pts.some(p => !p)) return null;
+  let k = 0; for (let i = 1; i < 4; i++) if (pts[i].area > pts[k].area) k = i;
+  return [0, 1, 2, 3].map(j => pts[(k + j) % 4]);
+}
+function solveH(dst, src) {
+  const A = [], b = [];
+  for (let i = 0; i < 4; i++) {
+    const { x, y } = dst[i], { x: u, y: v } = src[i];
+    A.push([x, y, 1, 0, 0, 0, -u * x, -u * y]); b.push(u);
+    A.push([0, 0, 0, x, y, 1, -v * x, -v * y]); b.push(v);
+  }
+  const n = 8;
+  for (let c = 0; c < n; c++) {
+    let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+    [A[c], A[p]] = [A[p], A[c]]; [b[c], b[p]] = [b[p], b[c]];
+    for (let r = c + 1; r < n; r++) { const f = A[r][c] / A[c][c]; for (let k = c; k < n; k++) A[r][k] -= f * A[c][k]; b[r] -= f * b[c]; }
+  }
+  const h = new Array(n);
+  for (let r = n - 1; r >= 0; r--) { let s = b[r]; for (let k = r + 1; k < n; k++) s -= A[r][k] * h[k]; h[r] = s / A[r][r]; }
+  return h;
+}
+function warp(gray, w, h, H) {
+  const out = new Uint8Array(PW * PH);
+  for (let y = 0; y < PH; y++) for (let x = 0; x < PW; x++) {
+    const d = H[6] * x + H[7] * y + 1, u = (H[0] * x + H[1] * y + H[2]) / d, v = (H[3] * x + H[4] * y + H[5]) / d;
+    let val = 255;
+    if (u >= 0 && v >= 0 && u < w - 1 && v < h - 1) {
+      const x0 = u | 0, y0 = v | 0, fx = u - x0, fy = v - y0, i = y0 * w + x0;
+      val = gray[i] * (1 - fx) * (1 - fy) + gray[i + 1] * fx * (1 - fy) + gray[i + w] * (1 - fx) * fy + gray[i + w + 1] * fx * fy;
+    }
+    out[y * PW + x] = val;
+  }
+  return out;
+}
+function bgMap(wg) {
+  const B = 40, nx = Math.ceil(PW / B), ny = Math.ceil(PH / B), bg = new Float32Array(nx * ny), tmp = [];
+  for (let by = 0; by < ny; by++) for (let bx = 0; bx < nx; bx++) {
+    tmp.length = 0;
+    for (let y = by * B; y < Math.min(PH, (by + 1) * B); y += 3) for (let x = bx * B; x < Math.min(PW, (bx + 1) * B); x += 3) tmp.push(wg[y * PW + x]);
+    tmp.sort((a, b) => a - b); bg[by * nx + bx] = tmp[Math.floor(tmp.length * 0.9)] || 255;
+  }
+  return (x, y) => {
+    const fx = x / B - 0.5, fy = y / B - 0.5;
+    const x0 = Math.max(0, Math.min(nx - 1, Math.floor(fx))), y0 = Math.max(0, Math.min(ny - 1, Math.floor(fy)));
+    const x1 = Math.min(nx - 1, x0 + 1), y1 = Math.min(ny - 1, y0 + 1);
+    const tx = Math.max(0, Math.min(1, fx - x0)), ty = Math.max(0, Math.min(1, fy - y0));
+    const v = bg[y0 * nx + x0] * (1 - tx) * (1 - ty) + bg[y0 * nx + x1] * tx * (1 - ty) + bg[y1 * nx + x0] * (1 - tx) * ty + bg[y1 * nx + x1] * tx * ty;
+    return Math.max(v, 60);
+  };
+}
+function extractCell(wg, bgf, cx, cy) {
+  const x0 = cx + 8, y0 = cy + LABEL + 5, w = CW - 16, h = CH - LABEL - 11, n = w * h;
+  const a = new Uint8Array(n);
+  for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) {
+    const r = wg[(y0 + yy) * PW + x0 + xx] / bgf(x0 + xx, y0 + yy), t = (0.80 - r) / 0.35;
+    a[yy * w + xx] = t <= 0 ? 0 : t >= 1 ? 255 : (t * 255) | 0;
+  }
+  const lab = new Int32Array(n), stack = new Int32Array(n), comps = [];
+  for (let i = 0; i < n; i++) {
+    if (a[i] <= 70 || lab[i]) continue;
+    const id = comps.length + 1; let sp = 0, area = 0, minx = w, maxx = 0, miny = h, maxy = 0;
+    stack[sp++] = i; lab[i] = id;
+    while (sp) {
+      const p = stack[--sp], x = p % w, y = (p / w) | 0;
+      area++; if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        const q = ny * w + nx; if (a[q] > 70 && !lab[q]) { lab[q] = id; stack[sp++] = q; }
+      }
+    }
+    comps.push({ area, minx, maxx, miny, maxy, keep: area >= 10 });
+  }
+  let bx0 = w, bx1 = 0, by0 = h, by1 = 0, total = 0;
+  for (const c of comps) if (c.keep) { total += c.area; bx0 = Math.min(bx0, c.minx); bx1 = Math.max(bx1, c.maxx); by0 = Math.min(by0, c.miny); by1 = Math.max(by1, c.maxy); }
+  if (total < 30) return null;
+  for (let i = 0; i < n; i++) if (lab[i] && !comps[lab[i] - 1].keep) a[i] = 0;
+  const pad = 2; bx0 = Math.max(0, bx0 - pad); by0 = Math.max(0, by0 - pad); bx1 = Math.min(w - 1, bx1 + pad); by1 = Math.min(h - 1, by1 + pad);
+  const gw = bx1 - bx0 + 1, gh = by1 - by0 + 1;
+  const c = document.createElement('canvas'); c.width = gw; c.height = gh;
+  const g = c.getContext('2d'), id = g.createImageData(gw, gh);
+  for (let yy = 0; yy < gh; yy++) for (let xx = 0; xx < gw; xx++) id.data[(yy * gw + xx) * 4 + 3] = a[(by0 + yy) * w + bx0 + xx];
+  g.putImageData(id, 0, 0);
+  return { u: c.toDataURL('image/png'), w: gw, h: gh, top: (y0 + by0) - (cy + BASE) };
+}
+async function processSheet(file, variant, page) {
+  const c = await fileToCanvas(file, 2800);
+  const w = c.width, h = c.height, gray = toGray(c);
+  let H;
+  {
+    const ds = Math.min(1, 900 / Math.max(w, h)), dc = document.createElement('canvas');
+    dc.width = Math.round(w * ds); dc.height = Math.round(h * ds);
+    dc.getContext('2d', { willReadFrequently: true }).drawImage(c, 0, 0, dc.width, dc.height);
+    const pts = findMarkers(toGray(dc), dc.width, dc.height);
+    if (!pts) throw new Error('markers');
+    H = solveH(MARK, pts.map(p => ({ x: p.x / ds, y: p.y / ds })));
+  }
+  await sleep(0);
+  const wg = warp(gray, w, h, H), bgf = bgMap(wg);
+  for (let i = 0; i < PERPAGE; i++) { const idx = page * PERPAGE + i; if (idx < CHARS.length) delete variant.glyphs[CHARS[idx]]; }
+  let found = 0;
+  for (let i = 0; i < PERPAGE; i++) {
+    const idx = page * PERPAGE + i; if (idx >= CHARS.length) break;
+    const gl = extractCell(wg, bgf, GX + (i % COLS) * CW, GY + Math.floor(i / COLS) * CH);
+    if (gl) { variant.glyphs[CHARS[idx]] = gl; found++; }
+  }
+  variant.pages[page] = true;
+  return found;
+}
+
+/* ---------- Glyphen laden ---------- */
+async function loadImages() {
+  imgs.clear(); tints.clear();
+  const jobs = [];
+  for (const v of profile.variants) for (const [ch, g] of Object.entries(v.glyphs)) {
+    jobs.push((async () => {
+      const im = new Image(); im.src = g.u;
+      try { await im.decode(); imgs.set(v.id + '|' + ch, { img: im, w: g.w, h: g.h, top: g.top }); } catch (e) {}
+    })());
+  }
+  await Promise.all(jobs);
+}
+const glyphTotal = () => profile.variants.reduce((n, v) => n + Object.keys(v.glyphs).length, 0);
+
+/* ---------- Varianten-Oberfläche ---------- */
+function pageRange(p) { return CHARS[p * PERPAGE] + ' bis ' + CHARS[Math.min(CHARS.length, (p + 1) * PERPAGE) - 1]; }
+function renderVariants() {
+  const box = $('#variants'); box.textContent = '';
+  profile.variants.forEach((v, vi) => {
+    const art = document.createElement('article'); art.className = 'variant'; art.dataset.vid = v.id;
+    const count = Object.keys(v.glyphs).length;
+    let html = '<div class="vhead"><h3>Variante ' + (vi + 1) + '</h3><span class="vcount">' + count + ' von ' + CHARS.length + ' Zeichen</span></div><div class="slots">';
+    for (let p = 0; p < NPAGES; p++) {
+      html += '<div class="slot"><span class="btn' + (v.pages[p] ? '' : ' primary') + '">Seite ' + (p + 1) + (v.pages[p] ? ' ersetzen' : ' hochladen') +
+        '<input type="file" accept="image/*" data-page="' + p + '" aria-label="Seite ' + (p + 1) + ' hochladen"></span><small class="' + (v.pages[p] ? 'done' : '') + '">' + pageRange(p) + '</small></div>';
+    }
+    html += '</div>';
+    if (count) {
+      html += '<details class="glyphs"><summary>Zeichen prüfen</summary><p class="tip" style="margin-top:8px">Zeichen antippen zum Entfernen.</p><div class="gridglyphs">';
+      for (const ch of CHARS) {
+        const g = v.glyphs[ch];
+        html += g ? '<button type="button" class="gl" data-ch="' + ch.replace(/"/g, '&quot;') + '" aria-label="Zeichen ' + ch + ' entfernen"><img alt="" src="' + g.u + '"><span></span></button>'
+                  : '<div class="gl miss">' + ch.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</div>';
+      }
+      html += '</div></details>';
+    }
+    if (profile.variants.length > 1) html += '<div class="row" style="margin-top:12px"><button type="button" class="btn small" data-act="del">Variante entfernen</button></div>';
+    art.innerHTML = html;
+    if (count) art.querySelectorAll('.gl:not(.miss)').forEach(b => { b.querySelector('span').textContent = b.dataset.ch; });
+    box.appendChild(art);
+  });
+}
+$('#variants').addEventListener('change', async e => {
+  const inp = e.target; if (!inp.matches('input[type=file]') || !inp.files[0] || busy) return;
+  const art = inp.closest('.variant'), v = profile.variants.find(x => x.id === art.dataset.vid), page = +inp.dataset.page, file = inp.files[0];
+  busy = true; say(hs, 'Seite ' + (page + 1) + ' wird ausgewertet …');
+  try {
+    await sleep(30);
+    const n = await processSheet(file, v, page);
+    await saveProfile(); await loadImages(); renderVariants(); scheduleRender();
+    const expect = Math.min(PERPAGE, CHARS.length - page * PERPAGE);
+    if (n < 5) say(hs, 'Nur ' + n + ' Zeichen erkannt. Prüfe, ob es die richtige Seite ist und das Foto hell und scharf genug.', 'err');
+    else say(hs, n + ' von ' + expect + ' Zeichen erkannt.' + (n < expect ? ' Fehlende Felder siehst du unter "Zeichen prüfen".' : ''), 'ok');
+  } catch (err) {
+    if (err && err.message === 'markers') say(hs, 'Ecken nicht gefunden. Die ganze Seite mit allen vier schwarzen Ecken fotografieren.', 'err');
+    else say(hs, 'Das Bild konnte nicht gelesen werden. Versuche ein JPG oder PNG.', 'err');
+  }
+  busy = false; inp.value = '';
+});
+$('#variants').addEventListener('click', async e => {
+  const gl = e.target.closest('.gl:not(.miss)');
+  const art = e.target.closest('.variant'); if (!art) return;
+  const v = profile.variants.find(x => x.id === art.dataset.vid);
+  if (gl) { delete v.glyphs[gl.dataset.ch]; await saveProfile(); await loadImages(); const open = art.querySelector('details')?.open; renderVariants(); if (open) $('[data-vid="' + v.id + '"] details').open = true; scheduleRender(); return; }
+  if (e.target.closest('[data-act="del"]')) {
+    profile.variants = profile.variants.filter(x => x !== v); await saveProfile(); await loadImages(); renderVariants(); scheduleRender();
+  }
+});
+$('#btn-addvar').addEventListener('click', async () => {
+  profile.variants.push({ id: uid(), glyphs: {}, pages: [false, false] }); await saveProfile(); renderVariants();
+  say(hs, 'Variante ' + profile.variants.length + ' angelegt.');
+});
+$('#btn-export-json').addEventListener('click', async () => {
+  if (!glyphTotal()) { say(hs, 'Es gibt noch keine Handschrift zum Sichern.', 'err'); return; }
+  if (await saveFile('meine-handschrift.json', JSON.stringify({ app: 'handschriftbot', v: 1, variants: profile.variants }), hs)) say(hs, 'Handschrift gesichert.', 'ok');
+});
+$('#file-import').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (d.app !== 'handschriftbot' || !Array.isArray(d.variants)) throw 0;
+    profile = { variants: d.variants.map(v => ({ id: v.id || uid(), glyphs: v.glyphs || {}, pages: v.pages || [true, true] })) };
+    await saveProfile(); await loadImages(); renderVariants(); scheduleRender(); say(hs, 'Handschrift geladen.', 'ok');
+  } catch (err) { say(hs, 'Diese Datei ist keine Handschriftbot-Sicherung.', 'err'); }
+  e.target.value = '';
+});
+
+/* ---------- Vorlage-Aktionen ---------- */
+$('#btn-tpl-pdf').addEventListener('click', async () => {
+  say(ts, 'Vorlage wird erstellt …');
+  const cs = []; for (let p = 0; p < NPAGES; p++) cs.push(await drawTemplate(p, 2));
+  const blob = await pagesToPdf(cs);
+  say(ts, '');
+  if (await saveFile('handschrift-vorlage.pdf', blob, ts)) say(ts, 'Vorlage gespeichert. Drucke sie auf A4 bei 100 % Größe.', 'ok');
+});
+$('#btn-tpl-show').addEventListener('click', async () => {
+  const box = $('#tmplpages');
+  if (!box.hidden) { box.hidden = true; $('#btn-tpl-show').textContent = 'Vorlage ansehen'; return; }
+  box.textContent = '';
+  for (let p = 0; p < NPAGES; p++) box.appendChild(await drawTemplate(p, 1));
+  box.hidden = false; $('#btn-tpl-show').textContent = 'Vorlage ausblenden';
+});
+
+/* ---------- Text aufbereiten ---------- */
+const MAP = { '‘': "'", '’': "'", '‚': "'", '“': '"', '”': '"', '„': '"', '«': '"', '»': '"', '–': '-', '—': '-', '−': '-', '…': '...', '•': '-', '·': '-', '×': 'x', '→': '-', '←': '-' };
+function prep(raw) {
+  let t = raw.replace(/\r\n?/g, '\n').replace(/[  -​  　\t]/g, ' ');
+  {
+    t = t.replace(/^\s{0,3}#{1,6}\s+/gm, '').replace(/\*\*([^*]+)\*\*/g, '$1').replace(/__([^_]+)__/g, '$1')
+      .replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,!?:;]|$)/g, '$1$2').replace(/`+/g, '').replace(/^\s*[-*•]\s+/gm, '- ')
+      .replace(/^\s*>\s?/gm, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/^\s*(---|\*\*\*)\s*$/gm, '');
+  }
+  let out = '';
+  for (const ch of t) {
+    if (ch === '\n' || ch === ' ' || CHARSET.has(ch)) { out += ch; continue; }
+    if (MAP[ch] !== undefined) { out += MAP[ch]; continue; }
+    const b = ch.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    if (b !== ch && [...b].every(c => CHARSET.has(c))) out += b;
+  }
+  return out;
+}
+
+/* ---------- Layout und Zeichnen ---------- */
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const mctx = document.createElement('canvas').getContext('2d');
+function tinted(key, rec, color) {
+  const k = key + '|' + color; let c = tints.get(k);
+  if (!c) {
+    c = document.createElement('canvas'); c.width = rec.w; c.height = rec.h;
+    const g = c.getContext('2d'); g.drawImage(rec.img, 0, 0);
+    g.globalCompositeOperation = 'source-in'; g.fillStyle = color; g.fillRect(0, 0, rec.w, rec.h);
+    tints.set(k, c);
+  }
+  return c;
+}
+function drawPaper(g, W, H, R, o) {
+  if (st.paper === 'transparent') { g.clearRect(0, 0, W, H); return; }
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
+  const gpx = 5 * MMPX * R;
+  if (st.paper === 'liniert') {
+    g.strokeStyle = '#a9bfe3'; g.lineWidth = 1.6 * R;
+    for (let k = 0; k < o.nLines; k++) { const y = o.top0 + k * o.pitch; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+  } else if (st.paper === 'kariert') {
+    g.strokeStyle = '#b8cbe9'; g.lineWidth = 1 * R;
+    for (let y = o.top0 % gpx; y < H; y += gpx) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+    for (let x = o.left % gpx; x < W; x += gpx) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); }
+  } else if (st.paper === 'punkte') {
+    g.fillStyle = '#93a2c2';
+    for (let y = o.top0 % gpx; y < H; y += gpx) for (let x = o.left % gpx; x < W; x += gpx) { g.beginPath(); g.arc(x, y, 1.7 * R, 0, 6.2832); g.fill(); }
+  }
+  if (st.paper === 'liniert') { g.strokeStyle = '#e59a9a'; g.lineWidth = 1.6 * R; g.beginPath(); g.moveTo(o.left - 22 * R, 0); g.lineTo(o.left - 22 * R, H); g.stroke(); }
+}
+function buildPages(R) {
+  const rng = mulberry(seed), W = Math.round(PW * R), H = Math.round(PH * R);
+  const s = st.size * R, nat = st.nat / 100, mm = MMPX * R, gridded = st.paper === 'kariert' || st.paper === 'punkte';
+  const gpx = 5 * mm;
+  const pitch = gridded ? Math.max(1, Math.round(st.line / 5)) * gpx : st.line * mm;
+  let top0 = 190 * R; if (gridded) top0 = Math.ceil(top0 / gpx) * gpx;
+  const left = (st.paper === 'liniert' ? 150 : 112) * R, right = 100 * R, bottom = 100 * R;
+  const avail = W - left - right, nLines = Math.max(1, Math.floor((H - bottom - top0) / pitch) + 1);
+  const cnt = {}, last = {}, missing = new Set();
+  const useFallback = st.fallback;
+  const fontSize = 116 * s;
+  mctx.font = fontSize + 'px Caveat, cursive';
+  const gap = st.letter * s;
+  const space = 28 * s * st.word;
+
+  function glyph(ch) {
+    const av = profile.variants.filter(v => imgs.has(v.id + '|' + ch)).map(v => v.id);
+    if (!av.length) {
+      missing.add(ch);
+      if (!useFallback) return null;
+      return { kind: 'font', ch, w: mctx.measureText(ch).width };
+    }
+    let vid;
+    if (st.mode === 'first') vid = av[0];
+    else if (st.mode === 'random') { const c = av.length > 1 ? av.filter(x => x !== last[ch]) : av; vid = c[Math.floor(rng() * c.length)]; }
+    else { cnt[ch] = cnt[ch] || 0; vid = av[cnt[ch]++ % av.length]; }
+    last[ch] = vid;
+    const key = vid + '|' + ch, rec = imgs.get(key);
+    return { kind: 'img', ch, key, rec, w: rec.w * s };
+  }
+  const paras = prep(st.text).split('\n'), lines = [];
+  for (const p of paras) {
+    if (!p.trim()) { lines.push(null); continue; }
+    const words = p.trim().split(/ +/).map(wd => {
+      const items = []; let width = 0;
+      for (const ch of wd) {
+        const gl = glyph(ch); if (!gl) continue;
+        const it = { gl, adv: gl.w + gap + (rng() - 0.5) * 2 * 2 * nat * s, dy: (rng() - 0.5) * 2 * 2.5 * nat * s, rot: (rng() - 0.5) * 2 * 0.038 * nat, sf: 1 + (rng() - 0.5) * 2 * 0.05 * nat };
+        items.push(it); width += it.adv;
+      }
+      return { items, width };
+    }).filter(wd => wd.items.length);
+    let cur = [], x = 0;
+    const flush = () => { lines.push(cur); cur = []; x = 0; };
+    for (const wd of words) {
+      const sp = space * (1 + (rng() - 0.5) * 0.3 * nat);
+      if (cur.length && x + sp + wd.width > avail) flush();
+      if (wd.width > avail) {                       // sehr langes Wort: zeichenweise umbrechen
+        let part = { items: [], width: 0 };
+        for (const it of wd.items) {
+          if (part.width + it.adv > avail && part.items.length) { if (cur.length) flush(); cur.push({ w: part, x: 0 }); flush(); part = { items: [], width: 0 }; }
+          part.items.push(it); part.width += it.adv;
+        }
+        cur.push({ w: part, x: 0 }); x = part.width; continue;
+      }
+      const gx = cur.length ? x + sp : 0; cur.push({ w: wd, x: gx }); x = gx + wd.width;
+    }
+    if (cur.length) flush();
+  }
+  const nPages = Math.min(40, Math.max(1, Math.ceil(lines.length / nLines)));
+  const canvases = [], o = { pitch, top0, left, nLines };
+  for (let p = 0; p < nPages; p++) {
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; drawPaper(g, W, H, R, o); canvases.push(c);
+  }
+  const rng2 = mulberry(seed ^ 0x9e3779b1);
+  lines.forEach((ln, li) => {
+    const page = Math.floor(li / nLines); if (page >= nPages) return;
+    const g = canvases[page].getContext('2d'), by = top0 + (li % nLines) * pitch - 1.5 * R;
+    const drift = (rng2() - 0.5) * 2 * 2.5 * nat * R, slope = (rng2() - 0.5) * 2 * 0.004 * nat;
+    if (!ln) return;
+    for (const { w, x } of ln) {
+      let px = left + x;
+      for (const it of w.items) {
+        const y = by + drift + it.dy + slope * (px - left), gl = it.gl;
+        g.save(); g.translate(px, y); g.rotate(it.rot + slope);
+        if (gl.kind === 'img') g.drawImage(tinted(gl.key, gl.rec, st.ink), 0, gl.rec.top * s * it.sf, gl.rec.w * s * it.sf, gl.rec.h * s * it.sf);
+        else { g.font = fontSize * it.sf + 'px Caveat, cursive'; g.fillStyle = st.ink; g.fillText(gl.ch, 0, 0); }
+        g.restore();
+        px += it.adv;
+      }
+    }
+  });
+  return { canvases, missing };
+}
+
+/* ---------- Vorschau ---------- */
+let timer = 0;
+function scheduleRender() { clearTimeout(timer); timer = setTimeout(renderPreview, 120); }
+function renderPreview() {
+  const { canvases, missing } = buildPages(1);
+  const box = $('#pages'); box.textContent = '';
+  canvases.forEach((c, i) => {
+    const wrap = document.createElement('div'); wrap.className = 'pagebox';
+    if (st.paper === 'transparent') c.classList.add('checker');
+    c.setAttribute('role', 'img'); c.setAttribute('aria-label', 'Seite ' + (i + 1) + ' in deiner Handschrift');
+    const tools = document.createElement('div'); tools.className = 'pagetools';
+    tools.innerHTML = '<span class="lab">Seite ' + (i + 1) + ' von ' + canvases.length + '</span><button type="button" class="btn small" data-act="copy" data-i="' + i + '">Kopieren</button><button type="button" class="btn small" data-act="png" data-i="' + i + '">PNG speichern</button>';
+    wrap.append(c, tools); box.appendChild(wrap);
+  });
+  $('#pagecount').textContent = canvases.length === 1 ? '1 Seite' : canvases.length + ' Seiten';
+  const ban = $('#banner'), total = glyphTotal();
+  if (!total) { ban.hidden = false; ban.textContent = 'Noch keine eigene Handschrift. Lade sie im Reiter "Handschrift" hoch.'; }
+  else if (missing.size) { ban.hidden = false; ban.textContent = 'Diese Zeichen fehlen noch in deiner Handschrift: ' + [...missing].join(' '); }
+  else ban.hidden = true;
+}
+async function renderFull() {
+  const R = +st.quality || 1;
+  return buildPages(R).canvases;
+}
+$('#pages').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const i = +b.dataset.i; say(ws, 'Wird erstellt …');
+  try {
+    const cs = await renderFull();
+    const blob = await canvasBlob(cs[i], 'image/png');
+    if (b.dataset.act === 'png') { say(ws, ''); if (await saveFile('handschrift-seite-' + (i + 1) + '.png', blob, ws)) say(ws, 'PNG gespeichert.', 'ok'); }
+    else {
+      try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); say(ws, 'Seite ' + (i + 1) + ' kopiert. Jetzt in GoodNotes einfügen.', 'ok'); }
+      catch (err) { say(ws, 'Kopieren geht hier nicht. Nutze "PNG speichern".', 'err'); }
+    }
+  } catch (err) { say(ws, 'Das hat nicht geklappt.', 'err'); }
+});
+$('#btn-pdf').addEventListener('click', async () => {
+  say(ws, 'PDF wird erstellt …'); await sleep(30);
+  try {
+    const cs = await renderFull(), blob = await pagesToPdf(cs);
+    say(ws, '');
+    if (await saveFile('handschrift.pdf', blob, ws)) say(ws, 'PDF gespeichert.', 'ok');
+  } catch (err) { say(ws, 'Das PDF konnte nicht erstellt werden.', 'err'); }
+});
+
+/* ---------- Einstellungen ---------- */
+const outs = {
+  size: v => Math.round(v * 100) + ' %', line: v => v + ' mm', nat: v => v + ' %', letter: v => v, word: v => (+v).toFixed(1) + '×'
+};
+function bindSettings() {
+  const txt = $('#txt'); txt.value = st.text;
+  txt.addEventListener('input', () => { st.text = txt.value; saveSettings(); scheduleRender(); });
+  for (const k of ['paper', 'mode', 'quality']) { const el = $('#' + k); el.value = st[k]; el.addEventListener('change', () => { st[k] = el.value; saveSettings(); scheduleRender(); }); }
+  for (const k of Object.keys(outs)) {
+    const el = $('#' + k), o = $('#o-' + k); el.value = st[k]; o.textContent = outs[k](st[k]);
+    el.addEventListener('input', () => { st[k] = +el.value; o.textContent = outs[k](el.value); saveSettings(); scheduleRender(); });
+  }
+  const ink = $('#ink'), chips = [...document.querySelectorAll('#swatches .chip')];
+  const mark = () => {
+    const v = String(st.ink).toLowerCase(); let preset = false;
+    chips.forEach(c => { if (c.dataset.c) { const on = c.dataset.c === v; c.classList.toggle('on', on); if (on) preset = true; } });
+    chips.find(c => !c.dataset.c).classList.toggle('on', !preset);
+  };
+  ink.value = st.ink; mark();
+  ink.addEventListener('input', () => { st.ink = ink.value; mark(); saveSettings(); scheduleRender(); });
+  $('#swatches').addEventListener('click', e => { const b = e.target.closest('button.chip'); if (!b) return; st.ink = b.dataset.c; ink.value = st.ink; mark(); saveSettings(); scheduleRender(); });
+  $('#btn-reroll').addEventListener('click', () => { seed = Math.floor(Math.random() * 1e9); scheduleRender(); });
+}
+
+/* ---------- Reiter ---------- */
+function showTab(name) {
+  const hand = name === 'hand';
+  $('#panel-hand').hidden = !hand; $('#panel-write').hidden = hand;
+  $('#tab-hand').setAttribute('aria-selected', hand); $('#tab-write').setAttribute('aria-selected', !hand);
+}
+$('#tab-hand').addEventListener('click', () => showTab('hand'));
+$('#tab-write').addEventListener('click', () => { showTab('write'); scheduleRender(); });
+
+/* ---------- Start ---------- */
+(async () => {
+  bindSettings();
+  const saved = await kvGet('profile');
+  if (saved && Array.isArray(saved.variants) && saved.variants.length) profile = { variants: saved.variants.map(v => ({ id: v.id, glyphs: v.glyphs || {}, pages: v.pages || [false, false] })) };
+  else profile = { variants: [{ id: uid(), glyphs: {}, pages: [false, false] }] };
+  await loadImages();
+  renderVariants();
+  try { await document.fonts.load('64px Caveat'); } catch (e) {}
+  showTab(glyphTotal() ? 'write' : 'hand');
+  renderPreview();
+})();
+})();
+
+</script>
+</body>
+</html>
