@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Kritzel</title>
+<title>Handschrift</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=DM+Mono:wght@400;500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
 <style>
@@ -30,7 +30,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);fo
   padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:0 max(40px,env(safe-area-inset-bottom,0px))}
 .wrap{max-width:1240px;margin-inline:auto}
 button,input,select,textarea{font:inherit;color:inherit}
-.top{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:8px 16px;
+.top{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:center;gap:8px 16px;
   padding-block:calc(10px + env(safe-area-inset-top,0px)) 10px;border-bottom:1px solid var(--line);margin-bottom:16px}
 .brand{font-family:var(--f-display);font-weight:700;font-size:36px;line-height:1;margin:0}
 @media (max-width:480px){.brand{font-size:30px}.tab{padding:6px 12px}}
@@ -101,13 +101,19 @@ details.more .fields{margin-top:14px}
 .pagetools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
 .pagetools .lab{font-family:var(--f-mono);font-size:13px;color:var(--muted);margin-right:auto}
 .banner{border:1px dashed var(--warn);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:12px}
+.chk{display:flex;gap:10px;align-items:center;min-height:44px;font-size:15px}
+.chk input{width:22px;height:22px;accent-color:var(--accent)}
+.pagewrap{position:relative}
+.frame{position:absolute;border:2px dashed var(--accent);border-radius:4px;pointer-events:none}
+.fh{position:absolute;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,.35);-webkit-tap-highlight-color:transparent}
+.fh.move{left:-12px;top:-12px}
+.fh.size{right:-12px;bottom:-12px;cursor:nwse-resize}
 @media (prefers-reduced-motion:no-preference){.btn{transition:border-color .15s,background .15s}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
-    <h1 class="brand">Kritzel</h1>
     <div class="tabs" role="tablist">
       <button class="tab" id="tab-hand" role="tab" aria-selected="false" aria-controls="panel-hand" type="button">Handschrift</button>
       <button class="tab" id="tab-write" role="tab" aria-selected="true" aria-controls="panel-write" type="button">Schreiben</button>
@@ -157,7 +163,11 @@ details.more .fields{margin-top:14px}
               <option value="punkte">Punkte</option>
               <option value="blanko">Blanko</option>
               <option value="transparent">Transparent</option>
+              <option value="blatt" disabled>Arbeitsblatt</option>
             </select></div>
+          <div class="field"><span class="lab">Arbeitsblatt</span>
+            <div class="row"><span class="btn small">Bild oder PDF wählen<input type="file" id="sheet-file" accept="image/*,application/pdf" aria-label="Arbeitsblatt hochladen"></span><button class="btn small" id="btn-sheet-del" type="button" hidden>Entfernen</button></div>
+            <span class="tip" id="sheetstatus" role="status" aria-live="polite"></span></div>
           <div class="field"><span class="lab">Farbe</span>
             <div class="chips" id="swatches">
               <button type="button" class="chip" data-c="#1d3fa8"><i style="background:#1d3fa8"></i>Blau</button>
@@ -165,11 +175,24 @@ details.more .fields{margin-top:14px}
               <label class="chip"><input type="color" id="ink" aria-label="Eigene Farbe">Eigene</label>
             </div></div>
           <div class="field"><label for="size">Schriftgröße <output id="o-size"></output></label><input type="range" id="size" min="0.1" max="1" step="0.01"></div>
+          <div class="field"><label for="pen">Stiftdicke <output id="o-pen"></output></label><input type="range" id="pen" min="0.1" max="1.5" step="0.05"></div>
           <div class="field"><label for="line">Zeilenabstand <output id="o-line"></output></label><input type="range" id="line" min="3" max="20" step="0.5"></div>
         </div>
         <details class="more">
+          <summary>Textfeld: Breite und Höhe</summary>
+          <div class="fields">
+            <label class="chk" style="grid-column:1/-1"><input type="checkbox" id="showframe">Rahmen in der Vorschau zeigen</label>
+            <div class="field"><label for="fx">Von links <output id="o-fx"></output></label><input type="range" id="fx" min="0" max="95" step="1"></div>
+            <div class="field"><label for="fy">Von oben <output id="o-fy"></output></label><input type="range" id="fy" min="0" max="95" step="1"></div>
+            <div class="field"><label for="fw">Breite <output id="o-fw"></output></label><input type="range" id="fw" min="5" max="100" step="1"></div>
+            <div class="field"><label for="fh">Höhe <output id="o-fh"></output></label><input type="range" id="fh" min="3" max="100" step="1"></div>
+          </div>
+        </details>
+        <details class="more">
           <summary>Mehr</summary>
           <div class="fields">
+            <div class="field"><label for="sx">Buchstabenbreite <output id="o-sx"></output></label><input type="range" id="sx" min="0.5" max="2" step="0.05"></div>
+            <div class="field"><label for="sy">Buchstabenhöhe <output id="o-sy"></output></label><input type="range" id="sy" min="0.5" max="2" step="0.05"></div>
             <div class="field"><label for="nat">Natürlichkeit <output id="o-nat"></output></label><input type="range" id="nat" min="0" max="100" step="1"></div>
             <div class="field"><label for="letter">Buchstabenabstand <output id="o-letter"></output></label><input type="range" id="letter" min="-10" max="40" step="1"></div>
             <div class="field"><label for="word">Wortabstand <output id="o-word"></output></label><input type="range" id="word" min="0.3" max="3" step="0.1"></div>
@@ -220,12 +243,15 @@ const MMPX = PW / 210;
 
 /* ---------- Zustand ---------- */
 const defaults = {
-  text: '', paper: 'liniert', ink: '#1d3fa8', size: 0.4, line: 8, nat: 40, letter: 4, word: 1,
+  text: '', paper: 'liniert', ink: '#1d3fa8', size: 0.4, pen: 0.4, sx: 1, sy: 1, frame: { x: 0.12, y: 0.08, w: 0.78, h: 0.84 }, showFrame: true, line: 8, nat: 40, letter: 4, word: 1,
   mode: 'cycle', fallback: true, quality: '1'
 };
 let st = Object.assign({}, defaults);
 try { Object.assign(st, JSON.parse(localStorage.getItem('kritzel-settings') || '{}')); } catch (e) {}
+st.frame = Object.assign({}, defaults.frame, st.frame);
 let profile = { variants: [] };
+let penBase = 4;
+let sheet = null;
 const imgs = new Map();      // "vid|zeichen" -> {img,w,h,top}
 const tints = new Map();
 let seed = 20240611;
@@ -338,8 +364,9 @@ async function pagesToPdf(canvases) {
   obj(2, '<< /Type /Pages /Kids [' + canvases.map((_, i) => (3 + 3 * i) + ' 0 R').join(' ') + '] /Count ' + n + ' >>');
   for (let i = 0; i < n; i++) {
     const j = await canvasToJpeg(canvases[i], 0.93);
-    obj(3 + 3 * i, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ' + (5 + 3 * i) + ' 0 R >> >> /Contents ' + (4 + 3 * i) + ' 0 R >>');
-    const content = 'q 595.28 0 0 841.89 0 0 cm /Im0 Do Q';
+    const hpt = (595.28 * canvases[i].height / canvases[i].width).toFixed(2);
+    obj(3 + 3 * i, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 ' + hpt + '] /Resources << /XObject << /Im0 ' + (5 + 3 * i) + ' 0 R >> >> /Contents ' + (4 + 3 * i) + ' 0 R >>');
+    const content = 'q 595.28 0 0 ' + hpt + ' 0 0 cm /Im0 Do Q';
     obj(4 + 3 * i, '<< /Length ' + content.length + ' >>\nstream\n' + content + '\nendstream');
     offsets[5 + 3 * i] = off;
     push((5 + 3 * i) + ' 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + j.w + ' /Height ' + j.h + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + j.bytes.length + ' >>\nstream\n');
@@ -526,10 +553,20 @@ async function loadImages() {
   for (const v of profile.variants) for (const [ch, g] of Object.entries(v.glyphs)) {
     jobs.push((async () => {
       const im = new Image(); im.src = g.u;
-      try { await im.decode(); imgs.set(v.id + '|' + ch, { img: im, w: g.w, h: g.h, top: g.top }); } catch (e) {}
+      try { await im.decode(); imgs.set(v.id + '|' + ch, { img: im, w: g.w, h: g.h, top: g.top, sw: strokeW(im, g.w, g.h) }); } catch (e) {}
     })());
   }
   await Promise.all(jobs);
+  const ws = [...imgs.values()].map(x => x.sw).filter(Boolean).sort((a, b) => a - b);
+  penBase = ws.length ? ws[Math.floor(ws.length / 2)] : 4;
+}
+function strokeW(im, w, h) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(im, 0, 0);
+  const d = g.getImageData(0, 0, w, h).data; let area = 0, edge = 0;
+  const on = (x, y) => x >= 0 && y >= 0 && x < w && y < h && d[(y * w + x) * 4 + 3] > 128;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (on(x, y)) { area++; if (!on(x - 1, y) || !on(x + 1, y) || !on(x, y - 1) || !on(x, y + 1)) edge++; }
+  return edge > 10 ? 2 * area / edge : 0;
 }
 const glyphTotal = () => profile.variants.reduce((n, v) => n + Object.keys(v.glyphs).length, 0);
 
@@ -644,54 +681,85 @@ function prep(raw) {
 /* ---------- Layout und Zeichnen ---------- */
 function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const mctx = document.createElement('canvas').getContext('2d');
-function tinted(key, rec, color) {
-  const k = key + '|' + color; let c = tints.get(k);
-  if (!c) {
-    c = document.createElement('canvas'); c.width = rec.w; c.height = rec.h;
-    const g = c.getContext('2d'); g.drawImage(rec.img, 0, 0);
-    g.globalCompositeOperation = 'source-in'; g.fillStyle = color; g.fillRect(0, 0, rec.w, rec.h);
-    tints.set(k, c);
+function dilate(g, src, r, ox, oy) {
+  for (let rad = r; rad > 0.3; rad -= 0.6) {
+    const n = Math.max(8, Math.ceil(rad * 7));
+    for (let i = 0; i < n; i++) { const a = i / n * 6.2832; g.drawImage(src, ox + Math.cos(a) * rad, oy + Math.sin(a) * rad); }
   }
-  return c;
+  g.drawImage(src, ox, oy);
 }
-function drawPaper(g, W, H, R, o) {
+function tinted(key, rec, color, r) {
+  const k = key + '|' + color + '|' + r; let o = tints.get(k);
+  if (o) return o;
+  const pad = r > 0 ? Math.ceil(r) + 1 : 0, W = rec.w + 2 * pad, H = rec.h + 2 * pad;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  if (r > 0) dilate(g, rec.img, r, pad, pad);
+  else if (r < 0) {
+    g.drawImage(rec.img, 0, 0);
+    const inv = document.createElement('canvas'); inv.width = W; inv.height = H;
+    const gi = inv.getContext('2d'); gi.fillStyle = '#000'; gi.fillRect(0, 0, W, H);
+    gi.globalCompositeOperation = 'destination-out'; gi.drawImage(rec.img, 0, 0);
+    const big = document.createElement('canvas'); big.width = W; big.height = H;
+    dilate(big.getContext('2d'), inv, -r, 0, 0);
+    g.globalCompositeOperation = 'destination-out'; g.drawImage(big, 0, 0);
+  } else g.drawImage(rec.img, 0, 0);
+  g.globalCompositeOperation = 'source-in'; g.fillStyle = color; g.fillRect(0, 0, W, H);
+  o = { c, pad }; tints.set(k, o); return o;
+}
+function drawPaper(g, W, H, R, o, p) {
   if (st.paper === 'transparent') { g.clearRect(0, 0, W, H); return; }
   g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
-  const gpx = 5 * MMPX * R;
+  if (st.paper === 'blatt') {
+    const im = sheet && sheet.imgs[p];
+    if (im) { const sc = Math.min(W / im.naturalWidth, H / im.naturalHeight), dw = im.naturalWidth * sc, dh = im.naturalHeight * sc; g.imageSmoothingQuality = 'high'; g.drawImage(im, (W - dw) / 2, (H - dh) / 2, dw, dh); }
+    return;
+  }
+  const gpx = 5 * MMPX * R, x0 = 112 * R;
   if (st.paper === 'liniert') {
     g.strokeStyle = '#a9bfe3'; g.lineWidth = 1.6 * R;
-    for (let k = 0; k < o.nLines; k++) { const y = o.top0 + k * o.pitch; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+    for (let k = 0; k < o.nRule; k++) { const y = o.top0 + k * o.pitch; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
   } else if (st.paper === 'kariert') {
     g.strokeStyle = '#b8cbe9'; g.lineWidth = 1 * R;
     for (let y = o.top0 % gpx; y < H; y += gpx) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
-    for (let x = o.left % gpx; x < W; x += gpx) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); }
+    for (let x = x0 % gpx; x < W; x += gpx) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); }
   } else if (st.paper === 'punkte') {
     g.fillStyle = '#93a2c2';
-    for (let y = o.top0 % gpx; y < H; y += gpx) for (let x = o.left % gpx; x < W; x += gpx) { g.beginPath(); g.arc(x, y, 1.7 * R, 0, 6.2832); g.fill(); }
+    for (let y = o.top0 % gpx; y < H; y += gpx) for (let x = x0 % gpx; x < W; x += gpx) { g.beginPath(); g.arc(x, y, 1.7 * R, 0, 6.2832); g.fill(); }
   }
-  if (st.paper === 'liniert') { g.strokeStyle = '#e59a9a'; g.lineWidth = 1.6 * R; g.beginPath(); g.moveTo(o.left - 22 * R, 0); g.lineTo(o.left - 22 * R, H); g.stroke(); }
+  if (st.paper === 'liniert') { g.strokeStyle = '#e59a9a'; g.lineWidth = 1.6 * R; g.beginPath(); g.moveTo(128 * R, 0); g.lineTo(128 * R, H); g.stroke(); }
 }
 function buildPages(R) {
-  const rng = mulberry(seed), W = Math.round(PW * R), H = Math.round(PH * R);
-  const s = st.size * R, nat = st.nat / 100, mm = MMPX * R, gridded = st.paper === 'kariert' || st.paper === 'punkte';
+  const rng = mulberry(seed), W = Math.round(PW * R);
+  const useSheet = st.paper === 'blatt' && !!sheet;
+  const H = Math.round((useSheet ? sheet.h / sheet.w * PW : PH) * R);
+  const s = st.size * R, sx = st.sx, sy = st.sy, nat = st.nat / 100, mm = MMPX * R, gridded = st.paper === 'kariert' || st.paper === 'punkte';
   const gpx = 5 * mm;
   const pitch = gridded ? Math.max(1, Math.round(st.line / 5)) * gpx : st.line * mm;
+  const ruled = st.paper === 'liniert' || gridded;
   let top0 = 190 * R; if (gridded) top0 = Math.ceil(top0 / gpx) * gpx;
-  const left = (st.paper === 'liniert' ? 150 : 112) * R, right = 100 * R, bottom = 100 * R;
-  const avail = W - left - right, nLines = Math.max(1, Math.floor((H - bottom - top0) / pitch) + 1);
+  const F = st.frame, fx = F.x * W, fy = F.y * H, fw = F.w * W, fh = F.h * H;
+  const left = fx, avail = fw;
+  const bases = [];
+  if (ruled) { for (let k = 0; k < 500; k++) { const y = top0 + k * pitch; if (y > fy + fh) break; if (y >= fy + 0.6 * pitch) bases.push(y); } }
+  else { for (let y = fy + 0.85 * pitch; y <= fy + fh + 0.01 && bases.length < 500; y += pitch) bases.push(y); }
+  if (!bases.length) bases.push(fy + fh);
+  const nLines = bases.length;
+  const nRule = Math.max(0, Math.floor((H - 100 * R - top0) / pitch) + 1);
   const cnt = {}, last = {}, missing = new Set();
   const useFallback = st.fallback;
+  const rOrig = Math.round(Math.max(-0.4 * penBase, Math.min(12, ((st.pen * MMPX) / st.size - penBase) / 2)) * 4) / 4;
   const fontSize = 116 * s;
   mctx.font = fontSize + 'px Caveat, cursive';
   const gap = st.letter * s;
-  const space = 28 * s * st.word;
+  const space = 28 * s * sx * st.word;
 
   function glyph(ch) {
     const av = profile.variants.filter(v => imgs.has(v.id + '|' + ch)).map(v => v.id);
     if (!av.length) {
       missing.add(ch);
       if (!useFallback) return null;
-      return { kind: 'font', ch, w: mctx.measureText(ch).width };
+      return { kind: 'font', ch, w: mctx.measureText(ch).width * sx };
     }
     let vid;
     if (st.mode === 'first') vid = av[0];
@@ -699,7 +767,7 @@ function buildPages(R) {
     else { cnt[ch] = cnt[ch] || 0; vid = av[cnt[ch]++ % av.length]; }
     last[ch] = vid;
     const key = vid + '|' + ch, rec = imgs.get(key);
-    return { kind: 'img', ch, key, rec, w: rec.w * s };
+    return { kind: 'img', ch, key, rec, w: rec.w * s * sx };
   }
   const paras = prep(st.text).split('\n'), lines = [];
   for (const p of paras) {
@@ -730,16 +798,16 @@ function buildPages(R) {
     }
     if (cur.length) flush();
   }
-  const nPages = Math.min(40, Math.max(1, Math.ceil(lines.length / nLines)));
-  const canvases = [], o = { pitch, top0, left, nLines };
+  const nPages = Math.min(40, Math.max(1, Math.ceil(lines.length / nLines), useSheet ? sheet.imgs.length : 1));
+  const canvases = [], o = { pitch, top0, nRule };
   for (let p = 0; p < nPages; p++) {
     const c = document.createElement('canvas'); c.width = W; c.height = H;
-    const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; drawPaper(g, W, H, R, o); canvases.push(c);
+    const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; drawPaper(g, W, H, R, o, p); canvases.push(c);
   }
   const rng2 = mulberry(seed ^ 0x9e3779b1);
   lines.forEach((ln, li) => {
     const page = Math.floor(li / nLines); if (page >= nPages) return;
-    const g = canvases[page].getContext('2d'), by = top0 + (li % nLines) * pitch - 1.5 * R;
+    const g = canvases[page].getContext('2d'), by = bases[li % nLines] - 1.5 * R;
     const drift = (rng2() - 0.5) * 2 * 2.5 * nat * R, slope = (rng2() - 0.5) * 2 * 0.004 * nat;
     if (!ln) return;
     for (const { w, x } of ln) {
@@ -747,8 +815,8 @@ function buildPages(R) {
       for (const it of w.items) {
         const y = by + drift + it.dy + slope * (px - left), gl = it.gl;
         g.save(); g.translate(px, y); g.rotate(it.rot + slope);
-        if (gl.kind === 'img') g.drawImage(tinted(gl.key, gl.rec, st.ink), 0, gl.rec.top * s * it.sf, gl.rec.w * s * it.sf, gl.rec.h * s * it.sf);
-        else { g.font = fontSize * it.sf + 'px Caveat, cursive'; g.fillStyle = st.ink; g.fillText(gl.ch, 0, 0); }
+        if (gl.kind === 'img') { const t = tinted(gl.key, gl.rec, st.ink, rOrig), k = s * it.sf; g.drawImage(t.c, -t.pad * k * sx, (gl.rec.top - t.pad) * k * sy, t.c.width * k * sx, t.c.height * k * sy); }
+        else { g.font = fontSize * it.sf + 'px Caveat, cursive'; g.fillStyle = st.ink; g.scale(sx, sy); g.fillText(gl.ch, 0, 0); }
         g.restore();
         px += it.adv;
       }
@@ -762,15 +830,23 @@ let timer = 0;
 function scheduleRender() { clearTimeout(timer); timer = setTimeout(renderPreview, 120); }
 function renderPreview() {
   const { canvases, missing } = buildPages(1);
-  const box = $('#pages'); box.textContent = '';
+  const box = $('#pages');
+  while (box.children.length > canvases.length) box.lastElementChild.remove();
   canvases.forEach((c, i) => {
-    const wrap = document.createElement('div'); wrap.className = 'pagebox';
-    if (st.paper === 'transparent') c.classList.add('checker');
-    c.setAttribute('role', 'img'); c.setAttribute('aria-label', 'Seite ' + (i + 1) + ' in deiner Handschrift');
-    const tools = document.createElement('div'); tools.className = 'pagetools';
-    tools.innerHTML = '<span class="lab">Seite ' + (i + 1) + ' von ' + canvases.length + '</span><button type="button" class="btn small" data-act="copy" data-i="' + i + '">Kopieren</button><button type="button" class="btn small" data-act="png" data-i="' + i + '">PNG speichern</button>';
-    wrap.append(c, tools); box.appendChild(wrap);
+    let wrap = box.children[i];
+    if (!wrap) {
+      wrap = document.createElement('div'); wrap.className = 'pagebox';
+      wrap.innerHTML = '<div class="pagewrap"><canvas role="img"></canvas><div class="frame"><button type="button" class="fh move" data-k="move" aria-label="Textfeld verschieben"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg></button><button type="button" class="fh size" data-k="size" aria-label="Textfeld Größe ändern"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19L19 5M19 5h-6M19 5v6M5 19h6M5 19v-6"/></svg></button></div></div><div class="pagetools"></div>';
+      box.appendChild(wrap);
+    }
+    const cv = wrap.querySelector('canvas');
+    if (cv.width !== c.width || cv.height !== c.height) { cv.width = c.width; cv.height = c.height; }
+    const g = cv.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(c, 0, 0);
+    cv.classList.toggle('checker', st.paper === 'transparent');
+    cv.setAttribute('aria-label', 'Seite ' + (i + 1) + ' in deiner Handschrift');
+    wrap.querySelector('.pagetools').innerHTML = '<span class="lab">Seite ' + (i + 1) + ' von ' + canvases.length + '</span><button type="button" class="btn small" data-act="copy" data-i="' + i + '">Kopieren</button><button type="button" class="btn small" data-act="png" data-i="' + i + '">PNG speichern</button>';
   });
+  syncFrame();
   $('#pagecount').textContent = canvases.length === 1 ? '1 Seite' : canvases.length + ' Seiten';
   const ban = $('#banner'), total = glyphTotal();
   if (!total) { ban.hidden = false; ban.textContent = 'Noch keine eigene Handschrift. Lade sie im Reiter "Handschrift" hoch.'; }
@@ -803,9 +879,97 @@ $('#btn-pdf').addEventListener('click', async () => {
   } catch (err) { say(ws, 'Das PDF konnte nicht erstellt werden.', 'err'); }
 });
 
+/* ---------- Textfeld ---------- */
+const FR = { fx: 'x', fy: 'y', fw: 'w', fh: 'h' };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function syncFrame() {
+  const f = st.frame;
+  document.querySelectorAll('.frame').forEach(el => {
+    el.style.left = f.x * 100 + '%'; el.style.top = f.y * 100 + '%'; el.style.width = f.w * 100 + '%'; el.style.height = f.h * 100 + '%';
+    el.hidden = !st.showFrame;
+  });
+  for (const [id, k] of Object.entries(FR)) { const v = Math.round(f[k] * 100); $('#' + id).value = v; $('#o-' + id).textContent = v + ' %'; }
+}
+let drag = null;
+$('#pages').addEventListener('pointerdown', e => {
+  const h = e.target.closest('.fh'); if (!h) return;
+  drag = { kind: h.dataset.k, x: e.clientX, y: e.clientY, f: Object.assign({}, st.frame), rect: h.closest('.pagewrap').getBoundingClientRect() };
+  try { h.setPointerCapture(e.pointerId); } catch (err) {}
+  e.preventDefault();
+});
+$('#pages').addEventListener('pointermove', e => {
+  if (!drag) return;
+  const dx = (e.clientX - drag.x) / drag.rect.width, dy = (e.clientY - drag.y) / drag.rect.height, f = drag.f;
+  if (drag.kind === 'move') { st.frame.x = clamp(f.x + dx, 0, 1 - f.w); st.frame.y = clamp(f.y + dy, 0, 1 - f.h); }
+  else { st.frame.w = clamp(f.w + dx, 0.05, 1 - f.x); st.frame.h = clamp(f.h + dy, 0.03, 1 - f.y); }
+  syncFrame(); scheduleRender();
+});
+const endDrag = () => { if (drag) { drag = null; saveSettings(); } };
+$('#pages').addEventListener('pointerup', endDrag);
+$('#pages').addEventListener('pointercancel', endDrag);
+
+/* ---------- Arbeitsblatt ---------- */
+let pdfjsP = null;
+function loadPdfJs() {
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (!pdfjsP) pdfjsP = new Promise((res, rej) => {
+    const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    sc.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; res(window.pdfjsLib); };
+    sc.onerror = () => { pdfjsP = null; rej(new Error('pdfjs')); };
+    document.head.appendChild(sc);
+  });
+  return pdfjsP;
+}
+async function pdfToUrls(file) {
+  const lib = await loadPdfJs();
+  const doc = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
+  const urls = [], n = Math.min(doc.numPages, 20);
+  for (let i = 1; i <= n; i++) {
+    const page = await doc.getPage(i), v1 = page.getViewport({ scale: 1 });
+    const vp = page.getViewport({ scale: 3300 / Math.max(v1.width, v1.height) });
+    const c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+    await page.render({ canvasContext: g, viewport: vp }).promise;
+    urls.push(c.toDataURL('image/jpeg', 0.88));
+  }
+  return urls;
+}
+async function sheetUrls(file) {
+  if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) return pdfToUrls(file);
+  const c = await fileToCanvas(file, 3300);
+  return [c.toDataURL('image/jpeg', 0.9)];
+}
+async function setSheet(urls) {
+  const list = await Promise.all(urls.map(async u => { const im = new Image(); im.src = u; await im.decode(); return im; }));
+  sheet = { urls, imgs: list, w: list[0].naturalWidth, h: list[0].naturalHeight };
+}
+function sheetUI() {
+  $('#btn-sheet-del').hidden = !sheet;
+  $('#paper option[value="blatt"]').disabled = !sheet;
+}
+$('#sheet-file').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const ss = $('#sheetstatus'); ss.textContent = 'Wird geladen …';
+  try {
+    const urls = await sheetUrls(f);
+    await setSheet(urls); await kvSet('sheet', { urls });
+    sheetUI(); st.paper = 'blatt'; $('#paper').value = 'blatt'; saveSettings();
+    ss.textContent = urls.length === 1 ? '1 Seite geladen. Verschiebe das Textfeld in der Vorschau.' : urls.length + ' Seiten geladen. Verschiebe das Textfeld in der Vorschau.';
+    scheduleRender();
+  } catch (err) {
+    ss.textContent = err && err.message === 'pdfjs' ? 'Für PDFs braucht die Seite einmal Internet. Oder lade ein Foto oder Bild hoch.' : 'Die Datei konnte nicht gelesen werden.';
+  }
+  e.target.value = '';
+});
+$('#btn-sheet-del').addEventListener('click', async () => {
+  sheet = null; await kvSet('sheet', null); sheetUI();
+  if (st.paper === 'blatt') { st.paper = 'liniert'; $('#paper').value = 'liniert'; saveSettings(); }
+  $('#sheetstatus').textContent = ''; scheduleRender();
+});
+
 /* ---------- Einstellungen ---------- */
 const outs = {
-  size: v => Math.round(v * 100) + ' %', line: v => v + ' mm', nat: v => v + ' %', letter: v => v, word: v => (+v).toFixed(1) + '×'
+  size: v => Math.round(v * 100) + ' %', pen: v => String(+(+v).toFixed(2)).replace('.', ',') + ' mm', sx: v => Math.round(v * 100) + ' %', sy: v => Math.round(v * 100) + ' %', line: v => v + ' mm', nat: v => v + ' %', letter: v => v, word: v => (+v).toFixed(1) + '×'
 };
 function bindSettings() {
   const txt = $('#txt'); txt.value = st.text;
@@ -825,6 +989,14 @@ function bindSettings() {
   ink.addEventListener('input', () => { st.ink = ink.value; mark(); saveSettings(); scheduleRender(); });
   $('#swatches').addEventListener('click', e => { const b = e.target.closest('button.chip'); if (!b) return; st.ink = b.dataset.c; ink.value = st.ink; mark(); saveSettings(); scheduleRender(); });
   $('#btn-reroll').addEventListener('click', () => { seed = Math.floor(Math.random() * 1e9); scheduleRender(); });
+  for (const [id, k] of Object.entries(FR)) $('#' + id).addEventListener('input', e => {
+    const f = st.frame; f[k] = +e.target.value / 100;
+    if (k === 'w') f.w = Math.min(f.w, 1 - f.x); if (k === 'h') f.h = Math.min(f.h, 1 - f.y);
+    if (k === 'x') f.x = Math.min(f.x, 1 - f.w); if (k === 'y') f.y = Math.min(f.y, 1 - f.h);
+    syncFrame(); saveSettings(); scheduleRender();
+  });
+  const sf = $('#showframe'); sf.checked = !!st.showFrame;
+  sf.addEventListener('change', () => { st.showFrame = sf.checked; saveSettings(); syncFrame(); });
 }
 
 /* ---------- Reiter ---------- */
@@ -838,6 +1010,9 @@ $('#tab-write').addEventListener('click', () => { showTab('write'); scheduleRend
 
 /* ---------- Start ---------- */
 (async () => {
+  try { const sh = await kvGet('sheet'); if (sh && sh.urls && sh.urls.length) await setSheet(sh.urls); } catch (e) { sheet = null; }
+  sheetUI();
+  if (st.paper === 'blatt' && !sheet) st.paper = 'liniert';
   bindSettings();
   const saved = await kvGet('profile');
   if (saved && Array.isArray(saved.variants) && saved.variants.length) profile = { variants: saved.variants.map(v => ({ id: v.id, glyphs: v.glyphs || {}, pages: v.pages || [false, false] })) };
